@@ -52,9 +52,49 @@ class Bd {
             if(despesa === null) {
                 continue
             }
+
+            despesa.id = i
             despesas.push(despesa)
         }
         return despesas
+
+    }//metodo recuperarTodosRegistros()
+
+    pesquisar(despesa) {
+        let despesasFiltradas =Array()
+        despesasFiltradas = this.recuperarTodosRegistros()
+        
+        //ano
+        if(despesa.ano != '') {
+            despesasFiltradas = despesasFiltradas.filter(d => d.ano == despesa.ano)
+        }
+        //mes
+        if(despesa.mes != '') {
+            despesasFiltradas = despesasFiltradas.filter(d => d.mes == despesa.mes)
+        }
+        //dia
+        if(despesa.dia != '') {
+            despesasFiltradas = despesasFiltradas.filter(d => d.dia == despesa.dia)
+        }
+        //tipo
+        if(despesa.tipo != '') {
+            despesasFiltradas = despesasFiltradas.filter(d => d.tipo == despesa.tipo)
+        }
+        //descricao
+        if(despesa.descricao != '') {
+            despesasFiltradas = despesasFiltradas.filter(d => d.descricao == despesa.descricao)
+        }
+        //valor
+        if(despesa.valor != '') {
+            despesasFiltradas = despesasFiltradas.filter(d => d.valor == despesa.valor)
+        }
+
+        return despesasFiltradas
+
+    }//metodo pesquisar()
+
+    remover(id) {
+        localStorage.removeItem(id)
     }
 
 }//Class Bd
@@ -101,15 +141,17 @@ function cadastrarDespesa() {
         $('#ModalRegistroDespesa').modal('show')
         
     }
-}
 
+}//function cadastrarDespesa()
 
 //Carregar pagina de listas das despesas 
-function carregarListaDespesas() {
-    let despesas = Array()     
-    despesas = bd.recuperarTodosRegistros()
+function carregarListaDespesas(despesas = Array(), filter = false) {
+    if(despesas.length == 0 && filter == false) {
+        despesas = bd.recuperarTodosRegistros()
+    }
     //selecionando o elemento tbody da tabela.
     let listaDespesas = document.getElementById('listaDespesas')
+    listaDespesas.innerHTML = ''
 
     /*  <tr>
             <td>23/12/2019</td>
@@ -118,15 +160,13 @@ function carregarListaDespesas() {
             <td>110,00</td>
         </tr> 
     */
-   //percorrer o array despesas, listando cada despesa de forma dinâmica.
-   despesas.forEach(function(d) {
-       console.log(d)
+    //percorrer o array despesas, listando cada despesa de forma dinâmica.
+    despesas.forEach(function(d) {
         //criando a linha (tr)
         let linha = listaDespesas.insertRow()
 
         // criando as colunas (td)
         linha.insertCell(0).innerHTML = `${d.dia }/${d.mes }/${d.ano}`
-
         //ajusta o tipo
         switch(parseInt(d.tipo)) {
             case 1 : d.tipo = 'Alimentação'
@@ -145,8 +185,38 @@ function carregarListaDespesas() {
                 break
         }
         linha.insertCell(1).innerHTML = d.tipo
-
         linha.insertCell(2).innerHTML = d.descricao
         linha.insertCell(3).innerHTML = `R$${d.valor}`
+
+        //criar btn de exclusão
+        let btn = document.createElement("button")
+        btn.className = 'btn btn-danger'
+        btn.innerHTML = '<i class="fas fa-times"></i>'
+        btn.id = `id_despesa_ ${d.id}`
+        btn.onclick = function() {
+            
+            //remover despesas      
+            let id = this.id.replace('id_despesa_', '')
+            bd.remover(id)
+            window.location.reload()
+        }
+        linha.insertCell(4).append(btn)
     })
+
+} //function carregarListaDespesas()
+
+// pesquisa de filtro
+function pesquisaDespesa() {
+    let ano = document.getElementById('ano').value
+    let mes = document.getElementById('mes').value
+    let dia = document.getElementById('dia').value
+    let tipo = document.getElementById('tipo').value
+    let descricao = document.getElementById('descricao').value
+    let valor =  document.getElementById('valor').value
+
+    let dispesa = new Despesa(ano, mes, dia, tipo, descricao, valor)
+
+    let despesas =  bd.pesquisar(dispesa)
+
+    this.carregarListaDespesas(despesas, true)
 }
